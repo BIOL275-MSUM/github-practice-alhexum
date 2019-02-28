@@ -1,0 +1,112 @@
+---
+title: "Super Cool Finch Stuff From the Big G Island "
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages
+
+Loading the packages for this analysis:
+
+```{r}
+library(readxl)
+library(tidyverse)
+
+
+#Read Data
+finches <- read_excel("finches_data.xlsx") 
+
+
+
+finches <- read_excel("finches_data.xlsx") 
+
+
+# Use to print finches data in console
+finches
+
+# Look at all of the variables in the dataset
+glimpse(finches)
+
+## Creating a Histogram with your data
+
+# Use this code to create a histogram comparing Number of Birds and Beak Length
+ggplot(
+  data = finches,                     # use the finches dataset
+  mapping = aes(x = beak_length,      # put beak length on the x axis
+                fill = outcome)       # fill sets the color of the boxes
+) +
+  geom_histogram(bins = 14) +         # add the histogram, use 14 bins
+  facet_wrap(~ outcome, ncol = 1) +   # outcome is the grouping variable
+  guides(fill = FALSE) +              # don't show a legend for fll color
+  labs(
+    title = "Figure 1.",              # title
+    x = "Beak Length (mm)",           # x-axis label
+    y = "Number of Birds"             # y-axis label
+  )
+
+## Summarizing the Data
+
+# Summarizing the data by: (survived vs. died)
+beak_length_grouped_summary <- 
+  finches %>% 
+  group_by(outcome) %>% 
+  summarize(mean = mean(beak_length),
+            sd = sd(beak_length),
+            n = n()) %>% 
+  mutate(sem = sd / sqrt(n),
+         upper = mean + 1.96 * sem,
+         lower = mean - 1.96 * sem)
+
+# Print the results in the console
+beak_length_grouped_summary
+
+## Creating a Bar Chart
+
+# Bar Chart of Mean Lengths
+ggplot(
+  data = beak_length_grouped_summary,   # dont use the original finches dataset
+  mapping = aes(x = outcome,            # survival on the x axis
+                y = mean,               # mean beak length on the y axis
+                fill = outcome)         # make died/survived different colors
+) +
+  geom_col() +                          # add columns
+  geom_errorbar(                        # add error bars
+    mapping = aes(ymin = lower,         #   lower 95% confidence limit
+                  ymax = upper),        #   upper 95% confidence limit
+    width = .3                          #   width of horizontal part of bars
+  ) +
+  guides(fill = FALSE) +                # don't show a legend for fll color
+  labs(
+    title = "Figure 2.",                # title
+    x = "Survival Outcome",             # x-axis label
+    y = "Beak Length (mm)"              # y-axis label
+  )
+
+## Creating a t-test
+
+# Create a vector of beak lengths for birds that died
+beak_length_died <-
+  finches %>%                     # start with finches dataset
+  filter(outcome == "died") %>%   # only include rows w/ outcome=died
+  pull(beak_length)               # extract the beak_length column
+
+# Print the vector in the console
+beak_length_died
+
+# Create a vector of beak lengths for birds that survived
+beak_length_survived <-
+  finches %>% 
+  filter(outcome == "survived") %>% 
+  pull(beak_length)
+
+# Print the vector in the console
+beak_length_survived
+
+# Perform a two-sample t-test
+t.test(beak_length_died, beak_length_survived)
+
+```
+
